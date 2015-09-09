@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Image Resizing with Canvas</title>
+
+		<style type="text/css">
+			#component {
+				width: 800px;
+				height: 600px;
+				background-color: #eee;
+				vertical-align: middle;
+				display: table-cell;
+				border: 2px solid;
+				overflow: auto;
+				box-sizing: border-box;
+				position: relative;
+			}
+
+			#container {
+				width: 560px;
+				height: 480px;
+				background-color: #ccc;
+				margin: auto;
+				overflow: hidden;
+			}
+
+			#present {
+				position: relative;
+			}
+
+			#shadow {
+				position: absolute;
+				top: 60px;
+				left: 118px;
+				opacity: .2;
+			}
+
+		</style>
+
+	</head>
+	<body>
+		<div id="component">
+			<div id="container">
+				<img id="present" src="img/image.jpg">
+			</div>
+			<img id="shadow" src="img/image.jpg">
+		</div>
+		<canvas id="display"></canvas>
+
+		<input id="file" type="file" accept="image/*">
+		<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+		<script type="text/javascript" src="main.js"></script>
+	</body>
+</html>
