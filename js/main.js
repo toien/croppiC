@@ -138,8 +138,8 @@ Croper.prototype = {
 			viewportCoodi = $viewport.offset();
 
 		var deltaCoodi = {
-			x: (viewportCoodi.left - imgCoodi.left) /*/ (img.weight / imgOriginalW)*/,
-			y: (viewportCoodi.top - imgCoodi.top) /*/ (img.height / imgOriginalH)*/
+			x: (viewportCoodi.left - imgCoodi.left) / (img.width / imgOriginalW),
+			y: (viewportCoodi.top - imgCoodi.top) / (img.height / imgOriginalH)
 		};
 
 		var canvas = document.getElementById('display'),
@@ -152,7 +152,10 @@ Croper.prototype = {
 		canvas.setAttribute('height', viewHeight);
 
 		console.log('drawing image demension start:(%d, %d) sizes:(%d, %d) into canvas', deltaCoodi.x, deltaCoodi.y, viewWidth, viewHeight);
-		context.drawImage(img, deltaCoodi.x + (imgCoodi.left - viewportCoodi.left), deltaCoodi.y + (imgCoodi.top - viewportCoodi.top), imgTrueWidthInView, imgTrueHeightInView, 0, 0, viewWidth, viewHeight);
+		/**
+		 * 如果是拉伸过的 Image ，需要将参数都转换为初始 Image 的属性再转换
+		 */
+		context.drawImage(img, deltaCoodi.x, deltaCoodi.y, imgTrueWidthInView, imgTrueHeightInView, 0, 0, viewWidth, viewHeight);
 
 		// context.drawImage(img, 0, 0, imgOriginalW, imgOriginalH, imgCoodi.left, imgCoodi.top, viewWidth - imgCoodi.left, viewHeight - imgCoodi.top);
 
