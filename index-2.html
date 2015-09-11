@@ -5,68 +5,38 @@
 		<title>Image Resizing with Canvas</title>
 
 		<style type="text/css">
-
 			#component {
 				width: 800px;
 				height: 600px;
-				background-color: #eee;
-				vertical-align: middle;
-				display: table-cell;
-				border: 2px solid;
-				overflow: auto;
-				box-sizing: border-box;
-				position: relative;
+				display: inline-block;
 			}
-
-			#viewport {
-				width: 560px;
-				height: 480px;
-				background-color: #ccc;
-				margin: auto;
-				overflow: hidden;
-			}
-
-			#present {
-				position: relative;
-				cursor: move;
-				z-index: 1;
-			}
-
-			#shadow {
-				position: absolute;
-				opacity: .2;
-			}
-
-			#component input {
-				position: absolute;
-				top: 10px;
-				right: 10px;
-			}
-
-			#component input:not([type=file]) {
-				z-index: 2;
-			}
-
 		</style>
-
 	</head>
 	<body>
 		<div id="component">
-			<div id="viewport">
-				<img id="present">
-			</div>
-			<img id="shadow">
-			<input id="yes" type="button" value="Yes">
-			<input id="file" type="file" accept="image/*">
+			
 		</div>
 
-		<div id="component">
-			<div id="viewport">
-				<canvas id="display"></canvas>
-			</div>
+		<div style="display : inline-block">
+			<canvas id="display"></canvas>
 		</div>
 
-		<script type="text/javascript" src="js/jquery-1.11.2.js"></script>
-		<script type="text/javascript" src="js/main.js"></script>
+		<script type="text/javascript" src="resources/jquery-1.11.2.js"></script>
+		<script type="text/javascript" src="resources/croppiC.js"></script>
+		
+		<script type="text/javascript">
+			var cropper = new Cropper({
+				el: '#component',
+				cropSize: {
+					width: 560,
+					height: 480
+				},
+				url: '/discover-spring/upload',
+				uploaded: function(resp) {
+					alert(resp);
+				},
+				display: false
+			});
+		</script>
 	</body>
 </html>
