@@ -4,8 +4,8 @@
  * @requires jquery.js
  *
  *
- * 
- * Usage: 
+ *
+ * Usage:
  * var cropper = new Cropper({
  *   el: '#component', // where this component depeon on, usually is a id expression
  *   cropSize: {
@@ -28,20 +28,23 @@ function Cropper(options) {
 	this._cache();
 	this._style();
 	this._bind();
+
+	if (options.src) {
+		this.load(options.src);
+	}
 }
 Cropper.prototype = {
 	constructor: Cropper,
 
-	template: 
-			'<div id="viewport">' + 
-				'<img id="present" style="position: relative; cursor: move;	z-index: 1;">' + 
-			'</div>' + 
-			'<img id="shadow">' + 
-			'<div id="controls">' +
-				'<input id="file" type="file" accept="image/*">' + 
-				'<input id="yes" type="button" value="Yes">' + 
-			'</div>' + 
-			'<canvas id="display"></canvas>',
+	template: '<div id="viewport">' +
+		'<img id="present" style="position: relative; cursor: move;	z-index: 1;">' +
+		'</div>' +
+		'<img id="shadow">' +
+		'<div id="controls">' +
+		'<input id="file" type="file" accept="image/*">' +
+		'<input id="yes" type="button" value="Yes">' +
+		'</div>' +
+		'<canvas id="display"></canvas>',
 	/**
 	 * Init cropper content and cache DOM and jQuery objects.
 	 *
@@ -122,7 +125,7 @@ Cropper.prototype = {
 
 		$el.on('change', '#file', function(event) {
 			if (event.target.files.item(0)) {
-				cropper.loadImage(event.target.files.item(0));
+				cropper.load(event.target.files.item(0));
 			}
 		});
 
@@ -141,10 +144,21 @@ Cropper.prototype = {
 			cropper._yes();
 		});
 	},
-	loadImage: function(file) {
-		var url = URL.createObjectURL(file),
+	/**
+	 * load image by src or file
+	 *
+	 * @param  {File|String} arg [description]
+	 */
+	load: function(arg) {
+		var url,
 			$viewport = this.$viewport,
 			cropper = this;
+
+		if (typeof arg == 'string') {
+			url = arg;
+		} else if (arg instanceof File) {
+			url = URL.createObjectURL(arg);
+		}
 
 		this.$present && this.$present.off('load');
 		$viewport.html('<img id="present" style="position: relative; cursor: move;	z-index: 1;">');
@@ -286,7 +300,7 @@ Cropper.prototype = {
 
 		} else { // base edge is width
 			width = $viewport.width() + 20,
-				height = width * (1 / imgRatio);
+			height = width * (1 / imgRatio);
 
 		}
 
@@ -360,14 +374,14 @@ Cropper.prototype = {
 		this._display();
 
 
-		if(this.options.url) {
+		if (this.options.url) {
 
 			var cropper = this;
 
 			cropper.send().done(function(response) {
 				var callback = cropper.options.uploaded;
 
-				if(callback && callback instanceof Function && arguments[2].status === 200) { // trigger uploaded as response is 200
+				if (callback && callback instanceof Function && arguments[2].status === 200) { // trigger uploaded as response is 200
 					callback.apply(cropper, arguments);
 				}
 
@@ -375,7 +389,7 @@ Cropper.prototype = {
 		}
 	},
 	_display: function() {
-		if(this.options.display) {
+		if (this.options.display) {
 			var $clone = this.$canvas.clone(),
 				clone = $clone.get(0);
 
@@ -394,24 +408,24 @@ Cropper.prototype = {
 	send: function() {
 		var canvas = this.canvas,
 			input = this.$input.get(0);
-		
+
 		var blobBin = atob(canvas.toDataURL().split(',')[1]);
 		var array = [];
 		for (var i = 0; i < blobBin.length; i++) {
 			array.push(blobBin.charCodeAt(i));
 		}
-		var file = new Blob([ new Uint8Array(array) ], {
-			type : 'image/png'
+		var file = new Blob([new Uint8Array(array)], {
+			type: 'image/png'
 		});
 
 		var form = new FormData();
 		form.append("file", file, input.files.item(0).name);
 
 		return $.ajax({
-			url : this.options.url,
-			type : "POST",
-			data : form,
-			contentType : false,
+			url: this.options.url,
+			type: "POST",
+			data: form,
+			contentType: false,
 			processData: false
 		}); // ajax request accept */* and not doing anyt process about response data;
 	},
