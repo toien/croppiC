@@ -95,9 +95,14 @@ Cropper.prototype = {
 
 		this.$controls.css({
 			position: 'absolute',
-			top: 10,
-			right: 10,
+			bottom: 2,
+			right: 0,
 			"z-index": 2
+		});
+
+		this.$input.css({
+			"max-width": 180,
+			"display": 'inline'
 		});
 
 		this.$canvas.css('display', 'none');
@@ -138,7 +143,8 @@ Cropper.prototype = {
 	},
 	loadImage: function(file) {
 		var url = URL.createObjectURL(file),
-			$viewport = this.$viewport;
+			$viewport = this.$viewport,
+			cropper = this;
 
 		this.$present && this.$present.off('load');
 		$viewport.html('<img id="present" style="position: relative; cursor: move;	z-index: 1;">');
