@@ -16,7 +16,7 @@
  *   uploaded: function(resp) { // callback function will be called when uploaded finished(HTTP status code = 200)
  *     alert(resp); // "this" refs the cropper
  *   },
- *   dispaly: true // append the working canvas to html body, default is false
+ *   debug: true // append the working canvas to html body, default is false
  * });
  *
  */
@@ -24,15 +24,18 @@ function Cropper(options) {
 	this.options = options;
 
 	this.el = options.el;
+	this.scaled = false;
 
 	this._cache();
 	this._style();
+	this._adaptViewport();
 	this._bind();
 
 	if (options.src) {
 		this.load(options.src);
 	}
 }
+
 Cropper.prototype = {
 	constructor: Cropper,
 
@@ -42,9 +45,16 @@ Cropper.prototype = {
 		'<img id="shadow">' +
 		'<div id="controls">' +
 		'<input id="file" type="file" accept="image/*">' +
+		'<input id="preview" type="button" value="Preview">' +
 		'<input id="yes" type="button" value="Yes">' +
 		'</div>' +
 		'<canvas id="display"></canvas>',
+
+	CONSTANTS: {
+		VIEWPORT_MIN_GAP: 100,
+		FILE_INPUT_MAX_WIDTH: 180,
+		WHEEL_DELTA_VALUE: 30
+	},
 	/**
 	 * Init cropper content and cache DOM and jQuery objects.
 	 *
@@ -70,7 +80,8 @@ Cropper.prototype = {
 	 *
 	 */
 	_style: function() {
-		var cropSize = this.options.cropSize;
+		var cropSize = this.options.cropSize,
+			constants = this.CONSTANTS;
 
 		this.$el.css({
 			"background-color": '#eee',
@@ -86,9 +97,8 @@ Cropper.prototype = {
 			left: 0,
 			bottom: 0,
 			right: 0,
-			width: cropSize.width,
-			height: cropSize.height,
-			"background-color": '#ccc'
+			border: '3px #62A4E8 dashed',
+			"background-color": '#ddd'
 		});
 
 		this.$shadow.css({
@@ -104,11 +114,51 @@ Cropper.prototype = {
 		});
 
 		this.$input.css({
-			"max-width": 180,
+			"max-width": constants.FILE_INPUT_MAX_WIDTH,
 			"display": 'inline'
 		});
 
 		this.$canvas.css('display', 'none');
+	},
+	_adaptViewport: function(argument) {
+		var $viewport = this.$viewport,
+			gap = this.CONSTANTS.VIEWPORT_MIN_GAP,
+			cropSize = this.options.cropSize,
+			cropRatio = cropSize.width / cropSize.height,
+			outerWidth = this.$el.width(),
+			outerHeight = this.$el.height(),
+			outerRatio = outerWidth / outerHeight;
+
+		var delta = gap * 2;
+
+		var viewportWidth, viewportHeight;
+
+		if (outerWidth - cropSize.width < delta || outerHeight - cropSize.height < delta) {
+
+			if(cropRatio > outerRatio) {
+				viewportWidth = outerWidth - delta;
+				viewportHeight = viewportWidth / cropRatio;
+			} else {
+				viewportHeight = outerHeight - delta;
+				viewportWidth = viewportHeight * cropRatio;
+			}
+			this.scaled = true;
+			this.scaleValue = viewportWidth / cropSize.width;
+
+			$viewport.css({
+				width: viewportWidth,
+				height: viewportHeight
+			});
+
+		} else {
+			$viewport.css({
+				width: cropSize.width,
+				height: cropSize.height
+			});
+
+			this.scaled = false;
+		}
+
 	},
 	/**
 	 * Bind handlers on cropper's el, delegating events except Presentation Image's "load" event.
@@ -129,7 +179,7 @@ Cropper.prototype = {
 			}
 		});
 
-		$el.on('wheel', '#present', function(event) {
+		$el.on('wheel', '#viewport', function(event) {
 			cropper._wheel(event);
 			event.preventDefault();
 		});
@@ -140,6 +190,9 @@ Cropper.prototype = {
 			cropper._endMove();
 		});
 
+		$el.on('click', '#preview', function() {
+			cropper._preview();
+		});
 		$el.on('click', '#yes', function() {
 			cropper._yes();
 		});
@@ -210,11 +263,12 @@ Cropper.prototype = {
 	},
 	_wheel: function(event) {
 		var wheelEvent = event.originalEvent,
-			deltaY = wheelEvent.deltaY;
-		if (deltaY > 0) {
-			this._resize(-20);
+			resizeValue = this.CONSTANTS.WHEEL_DELTA_VALUE,
+			mouseDeltaY = wheelEvent.deltaY;
+		if (mouseDeltaY > 0) {
+			this._resize(-resizeValue);
 		} else {
-			this._resize(20);
+			this._resize(resizeValue);
 		}
 
 		this._syncShadow();
@@ -290,16 +344,18 @@ Cropper.prototype = {
 			$img = this.$present,
 			img = this.present;
 
+		var wheelDeltaValue = this.CONSTANTS.WHEEL_DELTA_VALUE;
+
 		var imgRatio = Number(img.getAttribute('data-wh-ratio')),
 			viewportRatio = $viewport.width() / $viewport.height();
 
 		var width, height;
 		if (imgRatio > viewportRatio) { // base edge is height
-			height = $viewport.height() + 20;
+			height = $viewport.height() + wheelDeltaValue;
 			width = height * imgRatio;
 
 		} else { // base edge is width
-			width = $viewport.width() + 20,
+			width = $viewport.width() + wheelDeltaValue,
 			height = width * (1 / imgRatio);
 
 		}
@@ -331,15 +387,15 @@ Cropper.prototype = {
 		});
 	},
 	/**
-	 * Display the content in viewport data on canvas.
-	 * If "url" is specified in options on construction, cropper will send image in a "multipart/form-data" request to server.
-	 *
+	 * Draw the current viewport's content to working canvas.
+	 * 
 	 */
-	_yes: function() {
+	_draw: function() {
 		var $img = this.$present,
 			img = this.present,
 			$viewport = this.$viewport,
-			viewport = this.viewport;
+			viewport = this.viewport
+			cropSize = this.options.cropSize;
 
 		var imgOriginalW = Number(img.getAttribute('data-original-width')),
 			imgOriginalH = Number(img.getAttribute('data-original-height')),
@@ -361,18 +417,29 @@ Cropper.prototype = {
 		/**
 		 * IMPORTANT!
 		 */
-		canvas.setAttribute('width', viewWidth);
-		canvas.setAttribute('height', viewHeight);
+		canvas.setAttribute('width', cropSize.width);
+		canvas.setAttribute('height', cropSize.height);
 
 		// console.log('drawing image demension start:(%d, %d) sizes:(%d, %d) into canvas', deltaCoordi.x, deltaCoordi.y, viewWidth, viewHeight);
 		/**
 		 * Attention, this API uses image's FILE data rather than HTMLImageDOM's attribute!
 		 * This means if you use a resized image as "drawImage" method's source param, you must convert coordinate and source as use the original image.
 		 */
-		context.drawImage(img, deltaCoordi.x, deltaCoordi.y, imgTrueWidthInView, imgTrueHeightInView, 0, 0, viewWidth, viewHeight);
-
+		context.drawImage(img, deltaCoordi.x, deltaCoordi.y, imgTrueWidthInView, imgTrueHeightInView, 0, 0, cropSize.width, cropSize.height);
+	},
+	_preview: function() {
+		this._draw();
+		window.open(this.canvas.toDataURL());
+	},
+	/**
+	 * Display the content in viewport data on canvas.
+	 * If "url" is specified in options on construction, cropper will send image in a "multipart/form-data" request to server.
+	 *
+	 */
+	_yes: function() {
+		
+		this._draw();
 		this._display();
-
 
 		if (this.options.url) {
 
@@ -381,7 +448,7 @@ Cropper.prototype = {
 			cropper.send().done(function(response) {
 				var callback = cropper.options.uploaded;
 
-				if (callback && callback instanceof Function && arguments[2].status === 200) { // trigger uploaded as response is 200
+				if (callback && callback instanceof Function && arguments[2].status === 200) { // trigger uploaded as response is 200(HTTP Request SUCCESS)
 					callback.apply(cropper, arguments);
 				}
 
@@ -389,7 +456,7 @@ Cropper.prototype = {
 		}
 	},
 	_display: function() {
-		if (this.options.display) {
+		if (this.options.debug) {
 			var $clone = this.$canvas.clone(),
 				clone = $clone.get(0);
 
