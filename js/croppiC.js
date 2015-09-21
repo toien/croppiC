@@ -276,10 +276,10 @@ Cropper.prototype = {
 		console.log('img center: %d, %d; vp center: %d, %d', imgNewCenter.left, imgNewCenter.top, vpCenter.left, vpCenter.top);
 		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top <= vpCenter.top) {
 			console.log('Sector NW');
-			if(Math.abs(imgNewSE.left - vpSE.left) < 10) {
+			if(Math.abs(imgNewSE.left - vpSE.left) < 10 || imgNewSE.left < vpSE.left) {
 				newOffset.left = vpSE.left - $img.width();
 			}
-			if(Math.abs(imgNewSE.top - vpSE.top) < 10) {
+			if(Math.abs(imgNewSE.top - vpSE.top) < 10 || imgNewSE.top < vpSE.top) {
 				newOffset.top = vpSE.top - $img.height();
 			}
 			return newOffset;
@@ -288,10 +288,10 @@ Cropper.prototype = {
 		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top > vpCenter.top) {
 			console.log('Sector SW');
 			console.log('imgNewNE: %o, vpNE: %o', imgNewNE, vpNE);
-			if(Math.abs(imgNewNE.left - vpNE.left) < 10) {
+			if(Math.abs(imgNewNE.left - vpNE.left) < 5 || imgNewNE.left < vpNE.left) {
 				newOffset.left = vpNE.left - $img.width();
 			}
-			if(Math.abs(imgNewNE.top - vpNE.top) < 10) {
+			if(Math.abs(imgNewNE.top - vpNE.top) < 5 || imgNewNE.top > vpNE.top) {
 				newOffset.top = vpNE.top;
 			}
 			return newOffset;
@@ -299,10 +299,10 @@ Cropper.prototype = {
 
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top <= vpCenter.top) {
 			console.log('Sector NE');
-			if(Math.abs(imgNewSW.left - vpSW.left) < 10) {
+			if(Math.abs(imgNewSW.left - vpSW.left) < 5 || imgNewSW.left > vpSW.left) {
 				newOffset.left = vpSW.left;
 			}
-			if(Math.abs(imgNewSW.top - vpSW.top) < 10) {
+			if(Math.abs(imgNewSW.top - vpSW.top) < 5 || imgNewSW.top < vpSW.top) {
 				newOffset.top = vpSW.top - $img.height();
 			}
 			return newOffset;
@@ -310,10 +310,10 @@ Cropper.prototype = {
 
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top > vpCenter.top) {
 			console.log('Sector SE');
-			if(Math.abs(imgNewNW.left - vpNW.left) < 10) {
+			if(Math.abs(imgNewNW.left - vpNW.left) < 5 || imgNewNW.left > vpNW.left) {
 				newOffset.left = vpNW.left;
 			}
-			if(Math.abs(imgNewNW.top - vpNW.top) < 10) {
+			if(Math.abs(imgNewNW.top - vpNW.top) < 5 || imgNewNW.top > vpNW.top) {
 				newOffset.top = vpNW.top;
 			}
 			return newOffset;
