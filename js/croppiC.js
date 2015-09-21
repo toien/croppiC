@@ -158,7 +158,6 @@ Cropper.prototype = {
 
 			this.scaled = false;
 		}
-
 	},
 	/**
 	 * Bind handlers on cropper's el, delegating events except Presentation Image's "load" event.
@@ -183,9 +182,11 @@ Cropper.prototype = {
 			cropper._wheel(event);
 			event.preventDefault();
 		});
+
 		$el.on('mousedown', '#present', function(event) {
 			cropper._startMove(event);
 		});
+
 		$el.on('mouseup', '#present', function(event) {
 			cropper._endMove();
 		});
@@ -193,6 +194,7 @@ Cropper.prototype = {
 		$el.on('click', '#preview', function() {
 			cropper._preview();
 		});
+
 		$el.on('click', '#yes', function() {
 			cropper._yes();
 		});
@@ -231,8 +233,97 @@ Cropper.prototype = {
 		this.$present.attr('src', url);
 		this.$shadow.attr('src', url);
 	},
+	_processBoundry: function(newOffset) {
+		var $img = this.$present,
+			$vp = this.$viewport;
+
+		var imgNewNW = newOffset,
+			imgNewSW = {
+				left: imgNewNW.left,
+				top: imgNewNW.top + $img.height()
+			},
+			imgNewNE = {
+				left: imgNewNW.left + $img.width(),
+				top: imgNewNW.top
+			},
+			imgNewSE = {
+				left: imgNewNE.left,
+				top: imgNewSW.top
+			},
+			imgNewCenter = {
+				left: imgNewNW.left + $img.width() / 2,
+				top: imgNewNW.top + $img.height() / 2
+			};
+		var vpNW = $vp.offset(),
+			vpSW = {
+				left: vpNW.left,
+				top: vpNW.top + $vp.height()
+			},
+			vpNE = {
+				left: vpNW.left + $vp.width(),
+				top: vpNW.top
+			},
+			vpSE = {
+				left: vpNE.left,
+				top: vpSW.top
+			},
+			vpCenter = {
+				left: vpNW.left + $vp.width() / 2,
+				top: vpNW.top + $vp.height() / 2
+			};
+		// console.log('img NW: %o, SW: %o, NE: %o, SE: %o', imgNW, imgSW, imgNE, imgSE);
+		// console.log('vp  NW: %o, SW: %o, NE: %o, SE: %o', viewportNW, viewportSW, viewportNE, viewportSE);
+		console.log('img center: %d, %d; vp center: %d, %d', imgNewCenter.left, imgNewCenter.top, vpCenter.left, vpCenter.top);
+		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top <= vpCenter.top) {
+			console.log('Sector NW');
+			if(Math.abs(imgNewSE.left - vpSE.left) < 10) {
+				newOffset.left = vpSE.left - $img.width();
+			}
+			if(Math.abs(imgNewSE.top - vpSE.top) < 10) {
+				newOffset.top = vpSE.top - $img.height();
+			}
+			return newOffset;
+		}
+
+		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top > vpCenter.top) {
+			console.log('Sector SW');
+			console.log('imgNewNE: %o, vpNE: %o', imgNewNE, vpNE);
+			if(Math.abs(imgNewNE.left - vpNE.left) < 10) {
+				newOffset.left = vpNE.left - $img.width();
+			}
+			if(Math.abs(imgNewNE.top - vpNE.top) < 10) {
+				newOffset.top = vpNE.top;
+			}
+			return newOffset;
+		}
+
+		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top <= vpCenter.top) {
+			console.log('Sector NE');
+			if(Math.abs(imgNewSW.left - vpSW.left) < 10) {
+				newOffset.left = vpSW.left;
+			}
+			if(Math.abs(imgNewSW.top - vpSW.top) < 10) {
+				newOffset.top = vpSW.top - $img.height();
+			}
+			return newOffset;
+		}
+
+		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top > vpCenter.top) {
+			console.log('Sector SE');
+			if(Math.abs(imgNewNW.left - vpNW.left) < 10) {
+				newOffset.left = vpNW.left;
+			}
+			if(Math.abs(imgNewNW.top - vpNW.top) < 10) {
+				newOffset.top = vpNW.top;
+			}
+			return newOffset;
+		}
+
+		return newOffset;
+	},
 	_startMove: function(event) {
 		var cropper = this;
+
 		cropper.mouse = {
 			start: {
 				x: event.pageX,
@@ -240,32 +331,39 @@ Cropper.prototype = {
 				offset: this.$present.offset()
 			}
 		};
+
 		this.$present.on('mousemove', function(event) {
-			cropper.move(event);
+			cropper._move(event);
 		});
 	},
 	_endMove: function() {
 		this.$present.off('mousemove');
-
 	},
-	move: function(event) {
+	_move: function(event) {
+
 		var movedX = event.pageX - this.mouse.start.x,
 			movedY = event.pageY - this.mouse.start.y;
 		var newCoordi = {
 			left: this.mouse.start.offset.left + movedX,
 			top: this.mouse.start.offset.top + movedY
 		};
+
+		var processed = this._processBoundry(newCoordi);
+
 		// console.log('moved X: %d, Y: %d', movedX, movedY, '\nbefore mode: %s, after: %s', JSON.stringify(this.mouse.start), JSON.stringify(moved));
-		this.$present.offset(newCoordi);
-
-
+		this.$present.offset(processed);
 		this._syncShadow();
 	},
 	_wheel: function(event) {
 		var wheelEvent = event.originalEvent,
 			resizeValue = this.CONSTANTS.WHEEL_DELTA_VALUE,
 			mouseDeltaY = wheelEvent.deltaY;
-		if (mouseDeltaY > 0) {
+		if (mouseDeltaY > 0) { // wheel down
+			if (Math.abs(this.$present.width() - this.$viewport.width()) <= 1 
+					|| Math.abs(this.$present.height() - this.$viewport.height()) <= 1) {
+				return;
+			}
+
 			this._resize(-resizeValue);
 		} else {
 			this._resize(resizeValue);
