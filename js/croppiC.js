@@ -53,7 +53,8 @@ Cropper.prototype = {
 	CONSTANTS: {
 		VIEWPORT_MIN_GAP: 100,
 		FILE_INPUT_MAX_WIDTH: 180,
-		WHEEL_DELTA_VALUE: 30
+		WHEEL_DELTA_VALUE: 30,
+		BORDER_WIDTH: 10
 	},
 	/**
 	 * Init cropper content and cache DOM and jQuery objects.
@@ -97,7 +98,9 @@ Cropper.prototype = {
 			left: 0,
 			bottom: 0,
 			right: 0,
-			border: '3px #62A4E8 dashed',
+			"border-color": '#62A4E8',
+			"border-width": constants.BORDER_WIDTH,
+			"border-style": 'dashed',
 			"background-color": '#ddd'
 		});
 
@@ -235,7 +238,8 @@ Cropper.prototype = {
 	},
 	_processBoundry: function(newOffset) {
 		var $img = this.$present,
-			$vp = this.$viewport;
+			$vp = this.$viewport,
+			constants = this.CONSTANTS;
 
 		var imgNewNW = newOffset,
 			imgNewSW = {
@@ -277,10 +281,10 @@ Cropper.prototype = {
 		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top <= vpCenter.top) {
 			console.log('Sector NW');
 			if(Math.abs(imgNewSE.left - vpSE.left) < 10 || imgNewSE.left < vpSE.left) {
-				newOffset.left = vpSE.left - $img.width();
+				newOffset.left = vpSE.left - $img.width() + constants.BORDER_WIDTH;
 			}
 			if(Math.abs(imgNewSE.top - vpSE.top) < 10 || imgNewSE.top < vpSE.top) {
-				newOffset.top = vpSE.top - $img.height();
+				newOffset.top = vpSE.top - $img.height() + constants.BORDER_WIDTH;
 			}
 			return newOffset;
 		}
@@ -289,10 +293,10 @@ Cropper.prototype = {
 			console.log('Sector SW');
 			console.log('imgNewNE: %o, vpNE: %o', imgNewNE, vpNE);
 			if(Math.abs(imgNewNE.left - vpNE.left) < 5 || imgNewNE.left < vpNE.left) {
-				newOffset.left = vpNE.left - $img.width();
+				newOffset.left = vpNE.left - $img.width() + constants.BORDER_WIDTH;
 			}
 			if(Math.abs(imgNewNE.top - vpNE.top) < 5 || imgNewNE.top > vpNE.top) {
-				newOffset.top = vpNE.top;
+				newOffset.top = vpNE.top + constants.BORDER_WIDTH;
 			}
 			return newOffset;
 		}
@@ -300,10 +304,10 @@ Cropper.prototype = {
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top <= vpCenter.top) {
 			console.log('Sector NE');
 			if(Math.abs(imgNewSW.left - vpSW.left) < 5 || imgNewSW.left > vpSW.left) {
-				newOffset.left = vpSW.left;
+				newOffset.left = vpSW.left + constants.BORDER_WIDTH;
 			}
 			if(Math.abs(imgNewSW.top - vpSW.top) < 5 || imgNewSW.top < vpSW.top) {
-				newOffset.top = vpSW.top - $img.height();
+				newOffset.top = vpSW.top - $img.height() + constants.BORDER_WIDTH;
 			}
 			return newOffset;
 		}
@@ -311,10 +315,10 @@ Cropper.prototype = {
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top > vpCenter.top) {
 			console.log('Sector SE');
 			if(Math.abs(imgNewNW.left - vpNW.left) < 5 || imgNewNW.left > vpNW.left) {
-				newOffset.left = vpNW.left;
+				newOffset.left = vpNW.left + constants.BORDER_WIDTH;
 			}
 			if(Math.abs(imgNewNW.top - vpNW.top) < 5 || imgNewNW.top > vpNW.top) {
-				newOffset.top = vpNW.top;
+				newOffset.top = vpNW.top + constants.BORDER_WIDTH;
 			}
 			return newOffset;
 		}
