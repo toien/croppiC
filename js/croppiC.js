@@ -54,7 +54,7 @@ Cropper.prototype = {
 		VIEWPORT_MIN_GAP: 100,
 		FILE_INPUT_MAX_WIDTH: 180,
 		WHEEL_DELTA_VALUE: 30,
-		BORDER_WIDTH: 10
+		BORDER_WIDTH: 3
 	},
 	/**
 	 * Init cropper content and cache DOM and jQuery objects.
@@ -277,9 +277,9 @@ Cropper.prototype = {
 			};
 		// console.log('img NW: %o, SW: %o, NE: %o, SE: %o', imgNW, imgSW, imgNE, imgSE);
 		// console.log('vp  NW: %o, SW: %o, NE: %o, SE: %o', viewportNW, viewportSW, viewportNE, viewportSE);
-		console.log('img center: %d, %d; vp center: %d, %d', imgNewCenter.left, imgNewCenter.top, vpCenter.left, vpCenter.top);
+		// console.log('img center: %d, %d; vp center: %d, %d', imgNewCenter.left, imgNewCenter.top, vpCenter.left, vpCenter.top);
 		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top <= vpCenter.top) {
-			console.log('Sector NW');
+			// console.log('Sector NW');
 			if(Math.abs(imgNewSE.left - vpSE.left) < 10 || imgNewSE.left < vpSE.left) {
 				newOffset.left = vpSE.left - $img.width() + constants.BORDER_WIDTH;
 			}
@@ -290,8 +290,8 @@ Cropper.prototype = {
 		}
 
 		if(imgNewCenter.left <= vpCenter.left && imgNewCenter.top > vpCenter.top) {
-			console.log('Sector SW');
-			console.log('imgNewNE: %o, vpNE: %o', imgNewNE, vpNE);
+			// console.log('Sector SW');
+			// console.log('imgNewNE: %o, vpNE: %o', imgNewNE, vpNE);
 			if(Math.abs(imgNewNE.left - vpNE.left) < 5 || imgNewNE.left < vpNE.left) {
 				newOffset.left = vpNE.left - $img.width() + constants.BORDER_WIDTH;
 			}
@@ -302,7 +302,7 @@ Cropper.prototype = {
 		}
 
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top <= vpCenter.top) {
-			console.log('Sector NE');
+			// console.log('Sector NE');
 			if(Math.abs(imgNewSW.left - vpSW.left) < 5 || imgNewSW.left > vpSW.left) {
 				newOffset.left = vpSW.left + constants.BORDER_WIDTH;
 			}
@@ -313,7 +313,7 @@ Cropper.prototype = {
 		}
 
 		if(imgNewCenter.left > vpCenter.left && imgNewCenter.top > vpCenter.top) {
-			console.log('Sector SE');
+			// console.log('Sector SE');
 			if(Math.abs(imgNewNW.left - vpNW.left) < 5 || imgNewNW.left > vpNW.left) {
 				newOffset.left = vpNW.left + constants.BORDER_WIDTH;
 			}
@@ -584,7 +584,7 @@ Cropper.prototype = {
 			array.push(blobBin.charCodeAt(i));
 		}
 		var file = new Blob([new Uint8Array(array)], {
-			type: 'image/png'
+			type: input.files.item(0).type
 		});
 
 		var form = new FormData();
